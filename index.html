@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Bütçe" />
+  <title>Gelir Gider Takibi</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117; color: #fff; min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .header {
+      background: linear-gradient(135deg, #1a1f2e 0%, #16213e 100%);
+      padding: 52px 20px 0; border-bottom: 1px solid #ffffff12;
+    }
+    .total-section { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .total-label { font-size: 13px; color: #8892a4; margin-bottom: 4px; }
+    .total-amount { font-size: 36px; font-weight: 700; letter-spacing: -1px; }
+    .total-amount.positive { color: #4ade80; }
+    .total-amount.negative { color: #f87171; }
+    .reset-info { font-size: 12px; color: #8892a4; margin-top: 6px; }
+    .settings-box { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .reset-day-box { display: flex; align-items: center; gap: 8px; background: #ffffff0d; border-radius: 10px; padding: 6px 12px; }
+    .reset-day-box span { font-size: 12px; color: #8892a4; }
+    .reset-day-box input { width: 40px; background: transparent; border: none; color: #fff; font-size: 14px; font-weight: 700; text-align: center; outline: none; }
+    .btn-reset { font-size: 11px; color: #f87171; background: transparent; border: 1px solid #f8717140; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+    .tabs { display: flex; }
+    .tab-btn { flex: 1; padding: 10px 0; background: transparent; border: none; border-bottom: 2px solid transparent; color: #8892a4; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { border-bottom-color: #6366f1; color: #6366f1; font-weight: 700; }
+    .content { max-width: 480px; margin: 0 auto; padding: 16px 16px 120px; }
+
+```
+/* Groups */
+.group-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 14px; margin-bottom: 8px; cursor: pointer; border: 1px solid #ffffff0d; user-select: none; }
+.group-header.gelir { background: #4ade8015; }
+.group-header.gider { background: #f8717115; }
+.group-title { font-size: 15px; font-weight: 700; }
+.group-header.gelir .group-title { color: #4ade80; }
+.group-header.gider .group-title { color: #f87171; }
+.group-total { font-size: 14px; font-weight: 700; }
+.group-header.gelir .group-total { color: #4ade80; }
+.group-header.gider .group-total { color: #f87171; }
+.group-chevron { font-size: 12px; color: #8892a4; transition: transform 0.25s; margin-left: 8px; }
+.group-chevron.open { transform: rotate(180deg); }
+.group-accounts { overflow: hidden; transition: max-height 0.35s ease; }
+
+/* Account Cards */
+.account-card { background: #1e2333; border-radius: 16px; padding: 16px 16px 16px 20px; border: 1px solid #ffffff0d; position: relative; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.account-stripe { position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 16px 0 0 16px; }
+.account-left { display: flex; align-items: center; gap: 12px; }
+.account-icon { font-size: 22px; }
+.account-name { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+.account-balance { font-size: 20px; font-weight: 700; cursor: pointer; margin-top: 2px; }
+.account-balance.positive { color: #4ade80; }
+.account-balance.negative { color: #f87171; }
+.balance-edit { display: flex; gap: 6px; margin-top: 4px; align-items: center; }
+.balance-edit input { width: 120px; background: #2d3748; border: 1px solid #6366f1; border-radius: 8px; color: #fff; padding: 4px 8px; font-size: 13px; }
+.btn-confirm { background: #6366f1; border: none; border-radius: 8px; color: #fff; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.btn-cancel { background: #374151; border: none; border-radius: 8px; color: #9ca3af; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.btn-add { width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Transactions */
+.filter-select { width: 100%; background: #1e2333; border: 1px solid #ffffff1a; border-radius: 12px; color: #e2e8f0; padding: 10px 14px; font-size: 14px; margin-bottom: 16px; -webkit-appearance: none; }
+.tx-card { background: #1e2333; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid #ffffff08; }
+.tx-main { display: flex; justify-content: space-between; align-items: center; }
+.tx-left { display: flex; align-items: center; gap: 12px; }
+.tx-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.tx-icon.gelir { background: #4ade8022; }
+.tx-icon.gider { background: #f8717122; }
+.tx-title { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+.tx-sub { font-size: 11px; color: #8892a4; margin-top: 2px; }
+.tx-amount { font-size: 15px; font-weight: 700; }
+.tx-amount.gelir { color: #4ade80; }
+.tx-amount.gider { color: #f87171; }
+.btn-tx-toggle { padding: 6px 12px; background: #ffffff08; border: none; border-radius: 10px; color: #8892a4; font-size: 13px; cursor: pointer; margin-left: 8px; flex-shrink: 0; }
+.tx-actions { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffffff08; }
+.btn-tx-edit { flex: 1; padding: 8px 0; background: #6366f122; border: 1px solid #6366f140; border-radius: 10px; color: #6366f1; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-tx-delete { flex: 1; padding: 8px 0; background: #f8717122; border: 1px solid #f8717140; border-radius: 10px; color: #f87171; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+/* Archive */
+.archive-month-card { background: #1e2333; border-radius: 14px; margin-bottom: 12px; border: 1px solid #ffffff0d; overflow: hidden; }
+.archive-month-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; cursor: pointer; }
+.archive-month-title { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+.archive-month-sub { font-size: 12px; color: #8892a4; margin-top: 3px; }
+.archive-chevron { font-size: 12px; color: #8892a4; transition: transform 0.25s; }
+.archive-chevron.open { transform: rotate(180deg); }
+.archive-tx-list { padding: 0 12px 12px; }
+.archive-tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 10px; margin-bottom: 6px; background: #0f1117; }
+.archive-tx-left { display: flex; align-items: center; gap: 10px; }
+.archive-tx-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.archive-tx-icon.gelir { background: #4ade8022; }
+.archive-tx-icon.gider { background: #f8717122; }
+.archive-tx-title { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+.archive-tx-sub { font-size: 10px; color: #8892a4; margin-top: 1px; }
+.archive-tx-amount { font-size: 13px; font-weight: 700; }
+.archive-tx-amount.gelir { color: #4ade80; }
+.archive-tx-amount.gider { color: #f87171; }
+
+.empty-state { text-align: center; color: #8892a4; margin-top: 60px; font-size: 14px; line-height: 1.8; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: #000000cc; display: flex; align-items: flex-end; justify-content: center; z-index: 100; }
+.modal-overlay.hidden { display: none; }
+.modal-box { background: #1e2333; border-radius: 24px 24px 0 0; padding: 28px 24px calc(28px + env(safe-area-inset-bottom)); width: 100%; max-width: 480px; }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; color: #e2e8f0; }
+.type-toggle { display: flex; background: #0f1117; border-radius: 12px; padding: 4px; margin-bottom: 16px; }
+.type-btn { flex: 1; padding: 10px 0; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; background: transparent; color: #8892a4; transition: all 0.2s; }
+.type-btn.active-gelir { background: #4ade80; color: #000; }
+.type-btn.active-gider { background: #f87171; color: #000; }
+.modal-input { width: 100%; background: #0f1117; border: 1px solid #ffffff1a; border-radius: 12px; color: #fff; padding: 14px 16px; font-size: 16px; margin-bottom: 12px; -webkit-appearance: none; }
+.modal-input::placeholder { color: #4a5568; }
+.btn-submit { width: 100%; padding: 14px 0; border: none; border-radius: 14px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 8px; }
+.btn-submit.gelir { background: #4ade80; color: #000; }
+.btn-submit.gider { background: #f87171; color: #000; }
+```
+
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div style="max-width:480px;margin:0 auto">
+    <div class="total-section">
+      <div>
+        <div class="total-label">Toplam Bakiye</div>
+        <div class="total-amount positive" id="totalAmount">₺0,00</div>
+        <div class="reset-info" id="resetInfo">🔄 Sonraki sıfırlama: —</div>
+      </div>
+      <div class="settings-box">
+        <div class="reset-day-box">
+          <span>Sıfırlama günü:</span>
+          <input type="number" min="1" max="31" id="resetDayInput" value="1" />
+        </div>
+        <button class="btn-reset" onclick="resetAll()">Sıfırla</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('dashboard',this)">💳 Hesaplar</button>
+      <button class="tab-btn" onclick="switchTab('islemler',this)">📋 İşlemler</button>
+      <button class="tab-btn" onclick="switchTab('arsiv',this)">🗂 Arşiv</button>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div id="tab-dashboard"></div>
+  <div id="tab-islemler" style="display:none"></div>
+  <div id="tab-arsiv" style="display:none"></div>
+</div>
+
+<div class="modal-overlay hidden" id="modal" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modalTitle">İşlem Ekle</div>
+    <div class="type-toggle">
+      <button class="type-btn" id="btnGelir" onclick="setType('gelir')">↑ Gelir</button>
+      <button class="type-btn active-gider" id="btnGider" onclick="setType('gider')">↓ Gider</button>
+    </div>
+    <input class="modal-input" type="number" inputmode="decimal" id="modalAmount" placeholder="Tutar (₺)" />
+    <input class="modal-input" type="text" id="modalDesc" placeholder="Açıklama (isteğe bağlı)" />
+    <button class="btn-submit gider" id="btnSubmit" onclick="submitTransaction()">Ekle</button>
+  </div>
+</div>
+
+<script>
+// ── Hesap listesi ──────────────────────────────────────────────────────────────
+// Sıra: önce gider, sonra gelir (renderDashboard'da gider üstte görünür)
+const ACCOUNTS = [
+  // GİDER
+  { id:"world_furkan",   name:"World Furkan",   icon:"💳", color:"#1a73e8", group:"gider" },
+  { id:"axess_furkan",   name:"Axess Furkan",   icon:"💳", color:"#e53935", group:"gider" },
+  { id:"maximum_furkan", name:"Maximum Furkan", icon:"💳", color:"#6d4c41", group:"gider" },
+  { id:"world_esra",     name:"World Esra",     icon:"💳", color:"#00897b", group:"gider" },
+  { id:"krediler",       name:"Krediler",       icon:"🏦", color:"#8e24aa", group:"gider" },
+  { id:"muzik_kursu",    name:"Müzik Kursu",    icon:"🎹", color:"#f4511e", group:"gider" },
+  { id:"alp_anaokulu",   name:"Alp Anaokulu",   icon:"🎒", color:"#e6a817", group:"gider" },
+  { id:"faturalar",      name:"Faturalar",      icon:"📄", color:"#546e7a", group:"gider" },
+  { id:"aidat",          name:"Aidat",          icon:"🏢", color:"#5c6bc0", group:"gider" },
+  { id:"gun",            name:"Gün",            icon:"📅", color:"#26a69a", group:"gider" },
+  // GELİR
+  { id:"gelecek_maas",   name:"Gelecek Maaş",   icon:"💰", color:"#43a047", group:"gelir" },
+  { id:"nakit",          name:"Nakit",          icon:"💵", color:"#00acc1", group:"gelir" },
+  { id:"kira",           name:"Kira",           icon:"🏠", color:"#ab47bc", group:"gelir" },
+];
+
+// ── Veri yönetimi ──────────────────────────────────────────────────────────────
+function parse(key, def) {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(def)); } catch { return def; }
+}
+
+let balances     = parse("balances", {});
+let transactions = parse("transactions", []);
+let archive      = parse("archive", []);
+let resetDay     = parseInt(localStorage.getItem("resetDay") || "1");
+
+// Durum değişkenleri
+let currentType      = "gider";
+let currentAccountId = null;
+let editingAccountId = null;
+let editingTxId      = null;
+let expandedGroups   = { gider: true, gelir: true }; // varsayılan: ikisi de açık
+let expandedTx       = {};
+let expandedArchive  = {};
+let currentTab       = "dashboard";
+let currentFilter    = "all";
+
+function save() {
+  localStorage.setItem("balances",     JSON.stringify(balances));
+  localStorage.setItem("transactions", JSON.stringify(transactions));
+  localStorage.setItem("archive",      JSON.stringify(archive));
+  localStorage.setItem("resetDay",     String(resetDay));
+}
+
+function formatTL(v) {
+  return new Intl.NumberFormat("tr-TR",{style:"currency",currency:"TRY"}).format(v);
+}
+
+function getBalance(id) { return balances[id] || 0; }
+
+function totalBalance() {
+  return Object.values(balances).reduce((a,b)=>a+(b||0),0);
+}
+
+function nextResetDate() {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), resetDay);
+  if (d <= now) d.setMonth(d.getMonth()+1);
+  return d.toLocaleDateString("tr-TR");
+}
+
+function updateHeader() {
+  const total = totalBalance();
+  const el = document.getElementById("totalAmount");
+  el.textContent = formatTL(total);
+  el.className = "total-amount " + (total >= 0 ? "positive" : "negative");
+  document.getElementById("resetInfo").textContent = "🔄 Sonraki sıfırlama: " + nextResetDate();
+}
+
+// ── Otomatik sıfırlama ─────────────────────────────────────────────────────────
+function checkAutoReset() {
+  const todayStr = new Date().toISOString().slice(0,10);
+  if (localStorage.getItem("lastResetCheck") === todayStr) return;
+  localStorage.setItem("lastResetCheck", todayStr);
+  if (new Date().getDate() !== resetDay) return;
+
+  const MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+  const now = new Date();
+  const pm = now.getMonth() === 0 ? 11 : now.getMonth()-1;
+  const py = now.getMonth() === 0 ? now.getFullYear()-1 : now.getFullYear();
+
+  if (transactions.length > 0) {
+    archive.unshift({
+      id: Date.now(),
+      label: MONTHS[pm]+" "+py,
+      transactions: [...transactions],
+      balances: {...balances}
+    });
+    if (archive.length > 24) archive.pop();
+  }
+  balances = {};
+  transactions = [];
+  save();
+}
+
+// ── Sekme geçişi ───────────────────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  ["dashboard","islemler","arsiv"].forEach(t => {
+    document.getElementById("tab-"+t).style.display = t===tab ? "" : "none";
+  });
+  if (tab === "islemler") renderTransactions();
+  if (tab === "arsiv")    renderArchive();
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const container = document.getElementById("tab-dashboard");
+  const giderAcc = ACCOUNTS.filter(a => a.group==="gider");
+  const gelirAcc = ACCOUNTS.filter(a => a.group==="gelir");
+  const giderTotal = giderAcc.reduce((s,a) => s+getBalance(a.id), 0);
+  const gelirTotal = gelirAcc.reduce((s,a) => s+getBalance(a.id), 0);
+
+  // Gider üstte, gelir altta
+  container.innerHTML =
+    buildGroup("gider","💸 Gider Kalemleri", giderTotal, giderAcc) +
+    buildGroup("gelir","💰 Gelir Kalemleri", gelirTotal, gelirAcc);
+
+  updateHeader();
+}
+
+function buildGroup(type, title, total, accounts) {
+  const open = expandedGroups[type];
+  return `
+    <div class="group-header ${type}" onclick="toggleGroup('${type}')">
+      <span class="group-title">${title}</span>
+      <div style="display:flex;align-items:center">
+        <span class="group-total">${formatTL(total)}</span>
+        <span class="group-chevron ${open?'open':''}">▼</span>
+      </div>
+    </div>
+    <div class="group-accounts" style="max-height:${open?'3000px':'0'}">
+      ${accounts.map(buildCard).join("")}
+    </div>`;
+}
+
+function buildCard(acc) {
+  const bal = getBalance(acc.id);
+  const editing = editingAccountId === acc.id;
+  return `
+    <div class="account-card">
+      <div class="account-stripe" style="background:${acc.color}"></div>
+      <div class="account-left">
+        <span class="account-icon">${acc.icon}</span>
+        <div>
+          <div class="account-name">${acc.name}</div>
+          ${editing ? `
+            <div class="balance-edit">
+              <input type="number" inputmode="decimal" id="ei_${acc.id}" value="${bal}" />
+              <button class="btn-confirm" onclick="confirmEdit('${acc.id}')">✓</button>
+              <button class="btn-cancel" onclick="cancelEdit()">✕</button>
+            </div>` : `
+            <div class="account-balance ${bal>=0?'positive':'negative'}"
+                 onclick="startEdit('${acc.id}',${bal})">${formatTL(bal)}</div>`}
+        </div>
+      </div>
+      <button class="btn-add" style="background:${acc.color}22;color:${acc.color}"
+              onclick="openModal('${acc.id}','${acc.name}','${acc.icon}')">+</button>
+    </div>`;
+}
+
+function toggleGroup(type) {
+  expandedGroups[type] = !expandedGroups[type];
+  renderDashboard();
+}
+
+function startEdit(id, bal) {
+  editingAccountId = id;
+  renderDashboard();
+  setTimeout(() => {
+    const i = document.getElementById("ei_"+id);
+    if (i) { i.focus(); i.select(); }
+  }, 50);
+}
+
+function confirmEdit(id) {
+  const el = document.getElementById("ei_"+id);
+  const v = parseFloat(el ? el.value : "");
+  if (!isNaN(v)) { balances[id]=v; save(); }
+  editingAccountId = null;
+  renderDashboard();
+}
+
+function cancelEdit() { editingAccountId=null; renderDashboard(); }
+
+// ── İşlemler ───────────────────────────────────────────────────────────────────
+function renderTransactions() {
+  const container = document.getElementById("tab-islemler");
+  const filtered = currentFilter==="all"
+    ? transactions
+    : transactions.filter(t => t.accountId===currentFilter);
+  const opts = ACCOUNTS.map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
+
+  container.innerHTML = `
+    <select class="filter-select" id="filterSelect" onchange="changeFilter(this.value)">
+      <option value="all">Tüm Hesaplar</option>${opts}
+    </select>
+    ${filtered.length===0
+      ? `<div class="empty-state">Henüz işlem yok 📭</div>`
+      : filtered.map(buildTxCard).join("")}`;
+
+  document.getElementById("filterSelect").value = currentFilter;
+}
+
+function changeFilter(val) {
+  currentFilter = val;
+  renderTransactions();
+}
+
+function buildTxCard(tx) {
+  const acc = ACCOUNTS.find(a=>a.id===tx.accountId);
+  const open = expandedTx[tx.id];
+  return `
+    <div class="tx-card" id="tx-${tx.id}">
+      <div class="tx-main">
+        <div class="tx-left">
+          <div class="tx-icon ${tx.type}">${tx.type==='gelir'?'↑':'↓'}</div>
+          <div>
+            <div class="tx-title">${tx.desc||(tx.type==='gelir'?'Gelir':'Gider')}</div>
+            <div class="tx-sub">${acc?.name||''} · ${tx.date} ${tx.time}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;flex-shrink:0">
+          <div class="tx-amount ${tx.type}">${tx.type==='gelir'?'+':'-'}${formatTL(tx.amount)}</div>
+          <button class="btn-tx-toggle" onclick="toggleTxActions(${tx.id})">···</button>
+        </div>
+      </div>
+      ${open ? `
+      <div class="tx-actions">
+        <button class="btn-tx-edit" onclick="editTx(${tx.id})">✏️ Düzenle</button>
+        <button class="btn-tx-delete" onclick="deleteTx(${tx.id})">🗑 Sil</button>
+      </div>` : ''}
+    </div>`;
+}
+
+function toggleTxActions(id) {
+  const numId = Number(id);
+  expandedTx[numId] = !expandedTx[numId];
+  renderTransactions();
+}
+
+// SİL — bakiyeyi geri al, listeden çıkar
+function deleteTx(id) {
+  // id string olarak gelebilir, number'a çevir
+  const numId = Number(id);
+  const idx = transactions.findIndex(t => t.id === numId);
+  if (idx === -1) return;
+  const tx = transactions[idx];
+  // Bakiyeyi geri al
+  const revert = tx.type === "gelir" ? -tx.amount : tx.amount;
+  balances[tx.accountId] = (balances[tx.accountId] || 0) + revert;
+  // Listeden çıkar
+  transactions.splice(idx, 1);
+  delete expandedTx[numId];
+  save();
+  renderTransactions();
+  updateHeader();
+  if (currentTab === "dashboard") renderDashboard();
+}
+
+// DÜZENLE
+function editTx(id) {
+  const numId = Number(id);
+  const tx = transactions.find(t => t.id === numId);
+  if (!tx) return;
+  const acc = ACCOUNTS.find(a => a.id === tx.accountId);
+  editingTxId = numId;
+  document.getElementById("modalTitle").textContent = (acc?.icon||"")+" "+(acc?.name||"")+" — Düzenle";
+  document.getElementById("modalAmount").value = tx.amount;
+  document.getElementById("modalDesc").value = tx.desc||"";
+  document.getElementById("btnSubmit").textContent = "Güncelle";
+  setType(tx.type);
+  document.getElementById("modal").classList.remove("hidden");
+}
+
+// ── Arşiv ──────────────────────────────────────────────────────────────────────
+function renderArchive() {
+  const container = document.getElementById("tab-arsiv");
+  if (archive.length===0) {
+    container.innerHTML = `<div class="empty-state">Henüz arşivlenmiş ay yok 🗂<br><br><small style="color:#4a5568">Sıfırlama günü geldiğinde<br>o ayki veriler buraya taşınır.</small></div>`;
+    return;
+  }
+  container.innerHTML = archive.map(entry => {
+    const open = expandedArchive[entry.id];
+    const txList = entry.transactions||[];
+    const totalG = txList.filter(t=>t.type==="gelir").reduce((s,t)=>s+t.amount,0);
+    const totalD = txList.filter(t=>t.type==="gider").reduce((s,t)=>s+t.amount,0);
+    const txHtml = txList.length===0
+      ? `<div style="text-align:center;color:#8892a4;font-size:13px;padding:10px">İşlem yok</div>`
+      : txList.map(tx => {
+          const acc = ACCOUNTS.find(a=>a.id===tx.accountId);
+          return `
+            <div class="archive-tx-item">
+              <div class="archive-tx-left">
+                <div class="archive-tx-icon ${tx.type}">${tx.type==='gelir'?'↑':'↓'}</div>
+                <div>
+                  <div class="archive-tx-title">${tx.desc||(tx.type==='gelir'?'Gelir':'Gider')}</div>
+                  <div class="archive-tx-sub">${acc?.name||''} · ${tx.date}</div>
+                </div>
+              </div>
+              <div class="archive-tx-amount ${tx.type}">${tx.type==='gelir'?'+':'-'}${formatTL(tx.amount)}</div>
+            </div>`;
+        }).join("");
+
+    return `
+      <div class="archive-month-card">
+        <div class="archive-month-header" onclick="toggleArchive(${entry.id})">
+          <div>
+            <div class="archive-month-title">🗓 ${entry.label}</div>
+            <div class="archive-month-sub">
+              <span style="color:#4ade80">+${formatTL(totalG)}</span> &nbsp;·&nbsp;
+              <span style="color:#f87171">-${formatTL(totalD)}</span> &nbsp;·&nbsp;
+              ${txList.length} işlem
+            </div>
+          </div>
+          <span class="archive-chevron ${open?'open':''}">▼</span>
+        </div>
+        ${open ? `<div class="archive-tx-list">${txHtml}</div>` : ''}
+      </div>`;
+  }).join("");
+}
+
+function toggleArchive(id) { expandedArchive[id]=!expandedArchive[id]; renderArchive(); }
+
+// ── Modal ──────────────────────────────────────────────────────────────────────
+function openModal(accountId, name, icon) {
+  currentAccountId = accountId; editingTxId = null;
+  document.getElementById("modalTitle").textContent = icon+" "+name;
+  document.getElementById("modalAmount").value = "";
+  document.getElementById("modalDesc").value = "";
+  document.getElementById("btnSubmit").textContent = "Ekle";
+  setType("gider");
+  document.getElementById("modal").classList.remove("hidden");
+  setTimeout(()=>document.getElementById("modalAmount").focus(),100);
+}
+
+function closeModal(e) {
+  document.getElementById("modal").classList.add("hidden");
+  editingTxId = null;
+}
+
+function setType(type) {
+  currentType = type;
+  document.getElementById("btnGelir").className = "type-btn"+(type==="gelir"?" active-gelir":"");
+  document.getElementById("btnGider").className = "type-btn"+(type==="gider"?" active-gider":"");
+  document.getElementById("btnSubmit").className = "btn-submit "+type;
+}
+
+function submitTransaction() {
+  const amtStr = document.getElementById("modalAmount").value;
+  const amt = parseFloat(amtStr);
+  if (!amtStr||isNaN(amt)||amt<=0) {
+    document.getElementById("modalAmount").style.borderColor="#f87171";
+    setTimeout(()=>document.getElementById("modalAmount").style.borderColor="#ffffff1a",1000);
+    return;
+  }
+  const desc = document.getElementById("modalDesc").value.trim();
+
+  if (editingTxId) {
+    const idx = transactions.findIndex(t=>t.id===editingTxId);
+    if (idx===-1) return;
+    const old = transactions[idx];
+    // Eski etkiyi geri al
+    balances[old.accountId] = (balances[old.accountId]||0) + (old.type==="gelir" ? -old.amount : old.amount);
+    // Yeni etkiyi uygula
+    balances[old.accountId] = (balances[old.accountId]||0) + (currentType==="gelir" ? amt : -amt);
+    transactions[idx] = {...old, type:currentType, amount:amt, desc};
+    delete expandedTx[editingTxId];
+  } else {
+    balances[currentAccountId] = (balances[currentAccountId]||0) + (currentType==="gelir"?amt:-amt);
+    transactions.unshift({
+      id: Date.now(), accountId: currentAccountId, type: currentType,
+      amount: amt, desc,
+      date: new Date().toLocaleDateString("tr-TR"),
+      time: new Date().toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}),
+    });
+  }
+
+  save();
+  document.getElementById("modal").classList.add("hidden");
+  editingTxId = null;
+  renderDashboard();
+  if (currentTab==="islemler") renderTransactions();
+}
+
+function resetAll() {
+  balances={}; transactions=[];
+  save(); renderDashboard();
+  if (currentTab==="islemler") renderTransactions();
+}
+
+// ── Sıfırlama günü ─────────────────────────────────────────────────────────────
+document.getElementById("resetDayInput").value = resetDay;
+document.getElementById("resetDayInput").addEventListener("change", function(){
+  const v=parseInt(this.value);
+  if(v>=1&&v<=31){resetDay=v;save();updateHeader();}
+});
+
+// Enter kısayolları
+document.getElementById("modalAmount").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("modalDesc").focus();});
+document.getElementById("modalDesc").addEventListener("keydown",e=>{if(e.key==="Enter")submitTransaction();});
+
+// ── Başlat ─────────────────────────────────────────────────────────────────────
+checkAutoReset();
+renderDashboard();
+</script>
+
+</body>
+</html>
