@@ -37,9 +37,9 @@
 
 ```
 /* Groups */
-.group-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-radius: 16px; margin-bottom: 10px; cursor: pointer; border: 1px solid #ffffff18; user-select: none; }
-.group-header.gelir { background: linear-gradient(135deg, #4ade8025, #4ade8008); }
-.group-header.gider { background: linear-gradient(135deg, #f8717125, #f8717108); }
+.group-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-radius: 16px; margin-bottom: 10px; cursor: pointer; border: none; user-select: none; }
+.group-header.gelir { background: #1a3d2a; border: 2px solid #4ade8055; }
+.group-header.gider { background: #3d1a1a; border: 2px solid #f8717155; }
 .group-title { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
 .group-header.gelir .group-title { color: #4ade80; }
 .group-header.gider .group-title { color: #f87171; }
@@ -298,9 +298,9 @@ function renderDashboard() {
 function buildGroup(type, title, total, accounts) {
   const open = expandedGroups[type];
   return `
-    <div class="group-header ${type}" onclick="toggleGroup('${type}')">
-      <span class="group-title">${title}</span>
-      <div style="display:flex;align-items:center">
+    <div class="group-header ${type}" onclick="toggleGroup('${type}')" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;">
+      <span class="group-title" style="flex:1;">${title}</span>
+      <div style="display:flex;flex-direction:row;align-items:center;flex-shrink:0;gap:6px;">
         <span class="group-total">${formatTL(total)}</span>
         <span class="group-chevron ${open?'open':''}">▼</span>
       </div>
