@@ -616,7 +616,9 @@ function openModal(accountId, name, icon) {
   document.getElementById("modalAmount").value = "";
   document.getElementById("modalDesc").value = "";
   document.getElementById("btnSubmit").textContent = "Ekle";
-  setType("gider");
+  // Hesabın grubuna göre otomatik gelir/gider seç
+  const acc = getAllAccounts().find(a => a.id === accountId);
+  setType(acc && acc.group === "gelir" ? "gelir" : "gider");
   document.getElementById("modal").classList.remove("hidden");
   document.getElementById("modalAmount").focus();
 }
