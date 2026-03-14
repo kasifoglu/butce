@@ -297,12 +297,15 @@ function renderDashboard() {
 
 function buildGroup(type, title, total, accounts) {
   const open = expandedGroups[type];
+  const bg = type === 'gider' ? '#3d1a1a' : '#1a3d2a';
+  const border = type === 'gider' ? '#f87171' : '#4ade80';
+  const color = type === 'gider' ? '#f87171' : '#4ade80';
   return `
-    <div class="group-header ${type}" onclick="toggleGroup('${type}')" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;">
-      <span class="group-title" style="flex:1;">${title}</span>
-      <div style="display:flex;flex-direction:row;align-items:center;flex-shrink:0;gap:6px;">
-        <span class="group-total">${formatTL(total)}</span>
-        <span class="group-chevron ${open?'open':''}">▼</span>
+    <div onclick="toggleGroup('${type}')" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;background:${bg};border:2px solid ${border};border-radius:18px;padding:18px 20px;margin-bottom:14px;cursor:pointer;box-sizing:border-box;">
+      <span style="font-size:16px;font-weight:800;color:${color};flex:1;">${title}</span>
+      <div style="display:flex;flex-direction:row;align-items:center;flex-shrink:0;gap:8px;">
+        <span style="font-size:15px;font-weight:700;color:${color};">${formatTL(total)}</span>
+        <span style="font-size:11px;color:#8892a4;transition:transform 0.25s;display:inline-block;transform:${open?'rotate(180deg)':'rotate(0deg)'};">▼</span>
       </div>
     </div>
     <div class="group-accounts" style="max-height:${open?'3000px':'0'}">
