@@ -518,6 +518,41 @@ function editTx(id) {
 }
 
 // ── Arşiv ──────────────────────────────────────────────────────────────────────
+function buildAccountChart(txList) {
+  const allAcc = getAllAccounts().filter(a => !a.hidden);
+  // Only gider accounts that have transactions
+  const giderAcc = allAcc.filter(a => a.group === "gider");
+  const accTotals = giderAcc.map(acc => ({
+    acc,
+    total: txList.filter(t => t.accountId === acc.id && t.type === "gider").reduce((s,t) => s+t.amount, 0)
+  })).filter(x => x.total > 0).sort((a,b) => b.total - a.total);
+
+  if (accTotals.length === 0) return `<div style="text-align:center;color:#8892a4;font-size:13px;padding:16px 0">Gider işlemi yok</div>`;
+
+  const maxVal = accTotals[0].total;
+
+  return `
+    <div style="padding:16px 16px 8px;">
+      <div style="font-size:12px;color:#8892a4;margin-bottom:12px;font-weight:600;letter-spacing:0.5px;">HESAPLARA GÖRE GİDER</div>
+      ${accTotals.map(({acc, total}) => {
+        const pct = Math.round((total / maxVal) * 100);
+        return `
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:14px;">${acc.icon}</span>
+                <span style="font-size:13px;color:#e2e8f0;font-weight:500;">${acc.name}</span>
+              </div>
+              <span style="font-size:13px;font-weight:700;color:#f87171;">${formatTL(total)}</span>
+            </div>
+            <div style="background:#ffffff0d;border-radius:6px;height:8px;overflow:hidden;">
+              <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,${acc.color},${acc.color}99);width:${pct}%;transition:width 0.6s ease;"></div>
+            </div>
+          </div>`;
+      }).join("")}
+    </div>`;
+}
+
 function renderArchive() {
   const container = document.getElementById("tab-arsiv");
   if (archive.length===0) {
@@ -559,7 +594,15 @@ function renderArchive() {
           </div>
           <span class="archive-chevron ${open?'open':''}">▼</span>
         </div>
-        ${open ? `<div class="archive-tx-list">${txHtml}</div>` : ''}
+        ${open ? `
+          <div style="border-top:1px solid #ffffff08;">
+            ${buildAccountChart(txList)}
+          </div>
+          <div style="border-top:1px solid #ffffff08;">
+            <div style="padding:12px 16px 4px;font-size:12px;color:#8892a4;font-weight:600;letter-spacing:0.5px;">İŞLEM GEÇMİŞİ</div>
+            <div class="archive-tx-list">${txHtml}</div>
+          </div>
+        ` : ''}
       </div>`;
   }).join("");
 }
